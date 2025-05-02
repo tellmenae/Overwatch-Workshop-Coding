@@ -1,0 +1,739 @@
+variables
+{
+	player:
+		4: Ammo
+		7: Wraith
+		26: Flight
+		27: ReplenishWraith
+		28: NoInput
+		29: EndSpeed
+		30: StartSpeed
+}
+
+rule("READ ME !!! - // REAPER REWORK // by tellmenae#2567")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		"Developer Comment:\r\nThe goal I had with this rework was to make Reaper much more fun to play - while also demanding a much higher skill floor and allowing for more skill expression - as well as lower his tankbuster playstyle capabilities and focus on a"
+		Break;
+		"flank-focused playstyle. I've had theses ideas for months and only now got to executing them. Guess I was too hopeful Blizzard was going to finally do it - them announcing the rework's cancellation was the nail in the coffin for me.\r"
+		Break;
+		"Literally my first ever workshop creation, so it's pretty scuffed. Had zero script experience beforehand except for watching a few ROBLOX tutorials :P"
+		Break;
+		"Hope you have fun with my rework :]. Add AI, play with friends, test it out and don't hesitate to give input. You can reach out to me on Discord (tellmenae)!"
+		Break;
+		"Changelog:"
+		Break;
+		"Reaper:\r\n- Health reduced from 300 to 225\r"
+		Break;
+		"Wraith Form:\r\n- Now on a Resource meter:\r\n  - The resource replenishes over time\r\n  - Deal damage to replenish\n  - Replenishes after using Shadow Step and Ultimate\n- Triggers flight\r\n- Cooldown reduced to 3 seconds\r\n- No longer reloads Hellfire Shotguns"
+		Break;
+		"Shadow Step:\r\n- Reloads Hellfire Shotguns\r\n- Replenishes Wraith Form\r"
+		Break;
+	}
+}
+
+rule("reload after E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 2(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1.500, Abort When False);
+		Set Ammo(Event Player, 0, 6);
+		Wait(0.016, Ignore Condition);
+		Play Effect(Event Player, Buff Impact Sound, Null, Position Of(Event Player), 100);
+	}
+}
+
+rule("text stuff")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), String("{0} {1} {2}", Hero Icon String(Hero(Reaper)), String("{0}: {1}", Custom String(
+			"REAPER REWORK"), Custom String("6T3PW")), Hero Icon String(Hero(Reaper))), Null, Null, Left, 1, Color(Red), Color(White),
+			Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(All Players(All Teams), Null, String("{0} {1} {2}", Ability Icon String(Hero(Venture), Button(Secondary Fire)),
+			Custom String("by tellmenae#2567"), Ability Icon String(Hero(Venture), Button(Secondary Fire))), Null, Left, 1, Color(Red),
+			Color(White), Color(White), Visible To and String, Default Visibility);
+	}
+}
+
+disabled rule("set start speed and end speed")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Event Player.StartSpeed = 100;
+		Event Player.EndSpeed = 200;
+	}
+}
+
+disabled rule("when q speed")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Chase Player Variable At Rate(Event Player, EndSpeed, 0, 1, Destination and Rate);
+	}
+}
+
+disabled rule("when no q no speed")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ultimate(Event Player) == False;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("set health")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	actions
+	{
+		Set Max Health(Event Player, 83.300);
+	}
+}
+
+rule("dummybot")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Create Dummy Bot(Hero(Roadhog), Team 2, 0, Vector(0, 0, 1), Vector(0, 0, 0));
+		Create Dummy Bot(Hero(Ana), Team 2, 1, Vector(0, 0, -1), Vector(0, 0, 0));
+	}
+}
+
+rule("no gravity when using shift as reaper")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Event Player.Flight == True;
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Gravity(Event Player, 0);
+	}
+}
+
+rule("air movement")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+		Event Player.Flight == True;
+		Throttle Of(Event Player) != Vector(0, 0, 0);
+		disabled Is On Ground(Event Player) == False;
+	}
+
+	actions
+	{
+		Start Accelerating(Event Player, Vector(X Component Of(Throttle Of(Event Player)), Z Component Of(Throttle Of(Event Player))
+			* Y Component Of(Local Vector Of(Facing Direction Of(Event Player), Event Player, Rotation)), Z Component Of(Throttle Of(
+			Event Player)) * Z Component Of(Local Vector Of(Facing Direction Of(Event Player), Event Player, Rotation))), 10, 5, To Player,
+			Direction Rate and Max Speed);
+		Wait(0.010, Abort When False);
+		Loop If Condition Is True;
+		Else;
+		Cancel Primary Action(Event Player);
+	}
+}
+
+rule("up when jump")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+		Event Player.Flight == True;
+		Is Button Held(Event Player, Button(Jump)) == True;
+		disabled Is On Ground(Event Player) == False;
+	}
+
+	actions
+	{
+		Start Accelerating(Event Player, Up, 10, 5, To Player, Direction Rate and Max Speed);
+		Wait(0.010, Abort When False);
+		Loop If Condition Is True;
+	}
+}
+
+rule("down when crouch")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+		Event Player.Flight == True;
+		Is Button Held(Event Player, Button(Crouch)) == True;
+		disabled Is On Ground(Event Player) == False;
+	}
+
+	actions
+	{
+		Start Accelerating(Event Player, Down, 10, 5, To Player, Direction Rate and Max Speed);
+		Wait(0.010, Abort When False);
+		Loop If Condition Is True;
+		If(Is Using Ability 1(Event Player) == False);
+			Cancel Primary Action(Event Player);
+	}
+}
+
+rule("stop moving when no input")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		disabled Event Player.Flight == True;
+		disabled Is Using Ability 1(Event Player) == True;
+		Throttle Of(Event Player) == Vector(0, 0, 0);
+		Is Button Held(Event Player, Button(Jump)) == False;
+		Is Button Held(Event Player, Button(Crouch)) == False;
+		Speed Of(Event Player) >= 0.100;
+		disabled Is On Ground(Event Player) == False;
+		disabled Event Player.NoInput == True;
+	}
+
+	actions
+	{
+		Stop Accelerating(Event Player);
+		disabled Apply Impulse(Event Player, Vector(X Component Of(Velocity Of(Event Player)), Y Component Of(Velocity Of(Event Player)),
+			Z Component Of(Velocity Of(Event Player))), Speed Of(Event Player) * -0.250, To World, Incorporate Contrary Motion);
+		Wait(0.100, Abort When False);
+		Loop;
+	}
+}
+
+rule("using shift = trigger flight")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Event Player.Flight = True;
+	}
+}
+
+rule("not using shift = stop flight")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == False;
+	}
+
+	actions
+	{
+		Event Player.Flight = False;
+	}
+}
+
+rule("not using shift = normal gravity")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Event Player.Flight == False;
+		Is Using Ability 1(Event Player) == False;
+	}
+
+	actions
+	{
+		Set Gravity(Event Player, 100);
+	}
+}
+
+rule("set start wraith to 100")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Alive(Event Player) == True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Event Player.Wraith = 100;
+	}
+}
+
+rule("progressbar")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	actions
+	{
+		Create Progress Bar HUD Text(Event Player.Wraith == 100 ? Null : Event Player, Event Player.Wraith, Custom String(""), Top, 0,
+			Color(Red), Color(White), Visible To Values and Color, Default Visibility);
+	}
+}
+
+rule("Stop decreasing after canceling wraith")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == False;
+		disabled Event Player.ReplenishWraith == True;
+	}
+
+	actions
+	{
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Wait(0.016, Ignore Condition);
+		Chase Player Variable At Rate(Event Player, Wraith, 100, 4, Destination and Rate);
+	}
+}
+
+rule("Wraith Decrease")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Chase Player Variable At Rate(Event Player, Wraith, 0, 45, Destination and Rate);
+		Abort If Condition Is False;
+		End;
+		If(Is Using Ability 1(Event Player) == False);
+			Chase Player Variable At Rate(Event Player, Wraith, 100, 4, Destination and Rate);
+	}
+}
+
+rule("Wraith Increase")
+{
+	event
+	{
+		Player Dealt Damage;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == False;
+		disabled Event Player.ReplenishWraith == True;
+		Event Player.Wraith < 100;
+	}
+
+	actions
+	{
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Chase Player Variable At Rate(Event Player, Wraith, Event Player.Wraith + Event Damage / 13, 1000000000, Destination and Rate);
+		Wait(0.016, Ignore Condition);
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Wait(0.016, Ignore Condition);
+		Chase Player Variable At Rate(Event Player, Wraith, 100, 4, Destination and Rate);
+		If(Event Player.Wraith >= 100);
+			Event Player.Wraith = 100;
+	}
+}
+
+rule("Set cooldown to 4.5")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+		Event Player.Wraith == 0;
+	}
+
+	actions
+	{
+		Cancel Primary Action(Event Player);
+		Set Ability Cooldown(Event Player, Button(Ability 1), 4.500);
+	}
+}
+
+rule("speed and position")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Create HUD Text(Event Player, String("{0}: {1}", Custom String("SPEED"), String("{0} m/s", Speed Of(Event Player))), Null, Null,
+			Right, 0, Color(White), Color(White), Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, String("{0}: {1}", Custom String("POSITION"), Position Of(Event Player)), Null, Null, Right, 0,
+			Color(White), Color(White), Color(White), Visible To and String, Default Visibility);
+	}
+}
+
+rule("set cooldown when bar runs out fully")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Event Player.Wraith == 0;
+	}
+
+	actions
+	{
+		Set Ability Cooldown(Event Player, Button(Ability 1), 4.500);
+	}
+}
+
+rule("replenish wraith slightly when using teleport")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 2(Event Player) == True;
+	}
+
+	actions
+	{
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Chase Player Variable At Rate(Event Player, Wraith, 100, 32, Destination and Rate);
+		Wait(1.500, Abort When False);
+		Stop Chasing Player Variable(Event Player, Wraith);
+		Set Ability Cooldown(Event Player, Button(Ability 1), 0);
+		Chase Player Variable At Rate(Event Player, Wraith, 100, 4, Destination and Rate);
+	}
+}
+
+rule("hide hud")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Disable Game Mode HUD(Event Player);
+	}
+}
+
+rule("replenish wraith when using ultimate")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Event Player.Wraith = 100;
+	}
+}
+
+rule("Constantly replenish")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Chase Player Variable At Rate(Event Player, Wraith, 100, 4, Destination and Rate);
+	}
+}
+
+rule("ROADHOG")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Roadhog;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Nearest Walkable Position(Vector(0, 0, 2)));
+	}
+}
+
+rule("ANA")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Ana;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Nearest Walkable Position(Vector(0, 0, -2)));
+	}
+}
+
+rule("Wraith percentage")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Create HUD Text(All Players(All Teams), String("{0}: {1}", Ability Icon String(Hero(Reaper), Button(Ability 1)),
+			Event Player.Wraith), Null, Null, Top, 3, Color(Red), Color(White), Color(White), Visible To and String, Default Visibility);
+	}
+}
+
+rule("Ammo2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ammo(Event Player, 0, Event Player.Ammo);
+		End;
+	}
+}
+
+rule("Ammo")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		Reaper;
+	}
+
+	conditions
+	{
+		Ammo(Event Player, 0) != Event Player.Ammo;
+		Is Using Ability 1(Event Player) == False;
+	}
+
+	actions
+	{
+		Event Player.Ammo = Ammo(Event Player, 0);
+	}
+}
